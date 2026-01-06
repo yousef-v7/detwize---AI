@@ -108,7 +108,7 @@ export async function updateDoctor(input: UpdateDoctorInput) {
   }
 }
 
-export async function getAvailableDoctors() {
+export async function  getAvailableDoctors() {
   try {
     const doctors = await prisma.doctor.findMany({
       where: { isActive: true },
