@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import {
   useBookAppointment,
   useUserAppointments,
+  useDeleteAppointment,
 } from "@/hooks/use-appointment";
 import { APPOINTMENT_TYPES } from "@/lib/utils";
 import { format } from "date-fns";
@@ -16,24 +17,22 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 function AppointmentsPage() {
-  // state management for the booking process - this could be done with something like Zustand for larger apps
   const [selectedDentistId, setSelectedDentistId] = useState<string | null>(
     null
   );
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [currentStep, setCurrentStep] = useState(1); // 1: select dentist, 2: select time, 3: confirm
+  const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [bookedAppointment, setBookedAppointment] = useState<any>(null);
 
   const bookAppointmentMutation = useBookAppointment();
   const { data: userAppointments = [] } = useUserAppointments();
+  const deleteAppointmentMutation = useDeleteAppointment();
 
   const handleSelectDentist = (dentistId: string) => {
     setSelectedDentistId(dentistId);
-
-    // reset the state when dentist changes
     setSelectedDate("");
     setSelectedTime("");
     setSelectedType("");
@@ -58,15 +57,12 @@ function AppointmentsPage() {
       },
       {
         onSuccess: async (appointment) => {
-          // store the appointment details to show in the modal
           setBookedAppointment(appointment);
 
           try {
             const emailResponse = await fetch("/api/send-appointment-email", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userEmail: appointment.patientEmail,
                 doctorName: appointment.doctorName,
@@ -80,17 +76,13 @@ function AppointmentsPage() {
                 price: appointmentType?.price,
               }),
             });
-
             if (!emailResponse.ok)
               console.error("Failed to send confirmation email");
           } catch (error) {
             console.error("Error sending confirmation email:", error);
           }
 
-          // show the success modal
           setShowConfirmationModal(true);
-
-          // reset form
           setSelectedDentistId(null);
           setSelectedDate("");
           setSelectedTime("");
@@ -103,12 +95,15 @@ function AppointmentsPage() {
     );
   };
 
+  const handleDeleteAppointment = (id: string) => {
+    deleteAppointmentMutation.mutate(id);
+  };
+
   return (
     <>
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8 pt-24">
-        {/* header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Book an Appointment</h1>
           <p className="text-muted-foreground">
@@ -199,12 +194,20 @@ function AppointmentsPage() {
                     </p>
                   </div>
                 </div>
-                <div className="space-y-1 text-sm">
+                <div className="space-y-1 text-sm mb-2">
                   <p className="text-muted-foreground">
                     📅 {format(new Date(appointment.date), "MMM d, yyyy")}
                   </p>
                   <p className="text-muted-foreground">🕐 {appointment.time}</p>
                 </div>
+
+                {/* Delete / Cancel Button */}
+                <button
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+                  onClick={() => handleDeleteAppointment(appointment.id)}
+                >
+                  Cancel
+                </button>
               </div>
             ))}
           </div>
