@@ -10,7 +10,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <Image src={"/logo.png"} alt="DentWise Logo" width={32} height={32} className="w-11" />
-          <span className="font-semibold text-lg">DentWise</span>
+          <span className="font-semibold text-lg">DentWize</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
